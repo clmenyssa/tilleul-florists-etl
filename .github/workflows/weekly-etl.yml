@@ -2,8 +2,13 @@ name: Weekly florists ETL
 
 on:
   schedule:
-    - cron: "17 6 * * 1"   # every Monday at 06:17 UTC
+    - cron: "17 7 * * 1"          # every Monday at 07:17
+      timezone: "Europe/Paris"
   workflow_dispatch:
+
+concurrency:
+  group: weekly-etl
+  cancel-in-progress: false
 
 jobs:
   etl:
@@ -19,6 +24,7 @@ jobs:
       DB_NAME: ${{ vars.DB_NAME }}
       DB_USER: ${{ vars.DB_USER }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      SECURITY_GROUP_ID: ${{ vars.SECURITY_GROUP_ID }}
     steps:
       - name: Get the code
         uses: actions/checkout@v7
@@ -32,5 +38,18 @@ jobs:
       - name: Install the libraries
         run: pip install -r requirements.txt
 
+      - name: Open the warehouse to this runner
+        run: |
+          RUNNER_IP=$(curl -s https://checkip.amazonaws.com)
+          echo "RUNNER_IP=$RUNNER_IP" >> "$GITHUB_ENV"
+          aws ec2 authorize-security-group-ingress --group-id "$SECURITY_GROUP_ID" \
+            --protocol tcp --port 5432 --cidr "$RUNNER_IP/32" --query Return --output text
+
       - name: Run the ETL
         run: python etl.py
+
+      - name: Close the warehouse
+        if: always()
+        run: |
+          aws ec2 revoke-security-group-ingress --group-id "$SECURITY_GROUP_ID" \
+            --protocol tcp --port 5432 --cidr "$RUNNER_IP/32" --query Return --output text
