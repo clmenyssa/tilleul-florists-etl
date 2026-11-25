@@ -57,7 +57,7 @@ jobs:
         run: python etl.py
 
       - name: Close the warehouse
-        if: always()
+        if: always() && env.RUNNER_IP != ''
         run: |
           aws ec2 revoke-security-group-ingress --group-id "$SECURITY_GROUP_ID" \
             --protocol tcp --port 5432 --cidr "$RUNNER_IP/32" --query Return --output text
