@@ -9,7 +9,7 @@ COLUMNS = {
     "nombre_etablissements_ouverts": "open_shops",
     "opposition_diffusion_commerciale": "refuses_prospecting",
 }
-NOT_FLORISTS = "ZOO|ANIMAL|JARDIN"
+NOT_FLORISTS = "ZOO|ANIMAL|JARDINERIE"
 
 
 def clean_florists(companies):

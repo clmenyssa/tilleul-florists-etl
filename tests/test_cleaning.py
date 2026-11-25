@@ -18,6 +18,7 @@ COMPANIES = [
     company("333333333", "ANIMALIS"),
     company("444444444", "FLEURS DU RHONE", refuses=True),
     company("555555555", "L'ATELIER DES FLEURS"),
+    company("666666666", "JARDINERIE DU VAL DE SAONE"),
 ]
 
 
