@@ -1,0 +1,32 @@
+name: Hello Tilleul
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Say hello
+        run: echo "Hello from a GitHub runner"
+
+      - name: Show the machine
+        run: |
+          cat /etc/os-release | head -2
+          python3 --version
+          aws --version
+
+      - name: Get the code of the repository
+        uses: actions/checkout@v7
+
+      - name: Install Python 3.13
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Install the libraries
+        run: pip install requests
+
+      - name: Count the florists
+        run: python check_api.py
