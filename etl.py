@@ -12,10 +12,11 @@ import time
 from datetime import date
 
 import boto3
-import pandas as pd
 import requests
 from dotenv import load_dotenv
 from sqlalchemy import URL, create_engine, text
+
+from cleaning import clean_florists
 
 load_dotenv()
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
@@ -70,24 +71,10 @@ def transform(key):
     """Read the raw file from S3 and keep the florists that Tilleul may contact."""
     s3 = boto3.client("s3")
     raw = s3.get_object(Bucket=BUCKET, Key=key)["Body"].read()
-    table = pd.json_normalize(json.loads(raw))
-
-    columns = {
-        "siren": "siren",
-        "nom_complet": "name",
-        "siege.libelle_commune": "head_office_city",
-        "tranche_effectif_salarie": "headcount_band",
-        "nombre_etablissements_ouverts": "open_shops",
-        "opposition_diffusion_commerciale": "refuses_prospecting",
-    }
-    prospects = table[list(columns)].rename(columns=columns)
-
-    is_pet_shop = prospects["name"].str.contains("ZOO|ANIMAL", case=False)
-    refuses = prospects["refuses_prospecting"] == True
-    prospects = prospects[~is_pet_shop & ~refuses].drop(columns="refuses_prospecting")
+    companies = json.loads(raw)
+    prospects = clean_florists(companies)
     prospects.insert(0, "snapshot_date", TODAY)
-    log.info("Transform: %s prospects kept (%s pet shops, %s refusals removed)",
-             len(prospects), int(is_pet_shop.sum()), int(refuses.sum()))
+    log.info("Transform: %s prospects kept out of %s companies", len(prospects), len(companies))
     return prospects
 
 
